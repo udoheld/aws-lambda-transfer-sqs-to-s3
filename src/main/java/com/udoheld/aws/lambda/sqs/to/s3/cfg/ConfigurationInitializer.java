@@ -34,11 +34,15 @@ public class ConfigurationInitializer {
   public static final String CFG_SQS_DELETION_THREADS = "SQS_Deletion_Threads";
   public static final String CFG_S3_BUCKET_NAME = "S3_Bucket_Name";
   public static final String CFG_S3_BUCKET_FOLDER = "S3_Bucket_Folder";
+  public static final String CFG_S3_FILE_INITIATOR = "S3_File_Initiator";
   public static final String CFG_S3_FILE_PATTERN = "S3_File_Pattern";
   public static final String CFG_S3_FILE_SIZE_KB = "S3_File_Size_KB";
+  public static final String CFG_S3_FILE_TERMINATOR = "S3_File_Terminator";
   public static final String CFG_S3_UPLOAD_PART_SIZE_KB = "S3_Upload_Part_Size_KB";
   public static final String CFG_S3_MAX_MESSAGES_PER_FILE = "S3_Max_Messages_Per_File";
+  public static final String CFG_S3_RECORD_INITIATOR = "S3_Record_Initiator";
   public static final String CFG_S3_RECORD_SEPARATOR = "S3_Record_Separator";
+  public static final String CFG_S3_RECORD_TERMINATOR = "S3_Record_Terminator";
   public static final String CFG_S3_UPLOAD_THREADS_ENABLED = "S3_Upload_Threads_Enabled";
   public static final String CFG_S3_UPLOAD_THREADS_COUNT = "S3_Upload_Threads_Count";
 
@@ -128,8 +132,11 @@ public class ConfigurationInitializer {
     }
 
     config.setS3MaxMessagesPerFile(readValue(CFG_S3_MAX_MESSAGES_PER_FILE,10000));
-    config.setS3RecordSeparator(readValue(CFG_S3_RECORD_SEPARATOR,
-        linSep));
+    config.setS3FileInitiator(readValue(CFG_S3_FILE_INITIATOR,""));
+    config.setS3FileTerminator(readValue(CFG_S3_FILE_TERMINATOR, ""));
+    config.setS3RecordInitiator(readValue(CFG_S3_RECORD_INITIATOR, ""));
+    config.setS3RecordSeparator(readValue(CFG_S3_RECORD_SEPARATOR, linSep));
+    config.setS3RecordTerminator(readValue(CFG_S3_RECORD_TERMINATOR, ""));
     config.setS3UploadThreadsEnabled(readValue(CFG_S3_UPLOAD_THREADS_ENABLED,true));
     config.setS3UploadThreadCount(readValue(CFG_S3_UPLOAD_THREADS_COUNT,2));
 

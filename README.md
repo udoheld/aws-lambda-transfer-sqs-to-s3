@@ -6,7 +6,7 @@ This library can be used for transferring messages from SQS to S3 files.
 The .jar must be built and uploaded to AWS using the AWS Console.
 
 The environment variables "SQS_Source_Queue" and "S3_Bucket_Name" must be
-configured. Other variables can configured.
+configured. Other variables can configured. See [`ConfigurationInitializer`](aws-lambda-transfer-sqs-to-s3/src/main/java/com/udoheld/aws/lambda/sqs/to/s3/cfg/ConfigurationInitalizer.java) for a list of all variables.
 
 Please give this Lambda enough Memory and Runtime.
 

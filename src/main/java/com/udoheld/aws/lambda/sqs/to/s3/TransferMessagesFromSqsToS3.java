@@ -47,6 +47,8 @@ public class TransferMessagesFromSqsToS3 {
   private int fileNumber = 0;
   private int fileSize = 0;
 
+  private boolean firstRecordInFile = true;
+
   private List<String> transferredMsgIds = new ArrayList<>();
   private List<SqsMessageHandler.MessageHolder> readMessagesL;
 
@@ -108,6 +110,11 @@ public class TransferMessagesFromSqsToS3 {
     }
   }
 
+  /**
+   * Checks if there is enough time for processing more messages according the the configured
+   * threshold and the actual time left.
+   * @return true if more messages can be processed.
+   */
   private boolean hasTimeForMoreMessages() {
     boolean hasMoreTime
         = context.getRemainingTimeInMillis() > config.getLambdaMaxRemainingTimeMs();
@@ -118,11 +125,18 @@ public class TransferMessagesFromSqsToS3 {
     return hasMoreTime;
   }
 
+  /**
+   * Reads messages from SQS
+   * @return true, if messages were present and have been read.
+   */
   private boolean readMessages() {
     readMessagesL = sqsMessageHandler.readMessages();
     return readMessagesL != null && readMessagesL.size() > 0;
   }
 
+  /**
+   * Processes the already read messages from SQS.
+   */
   private void processMessages() {
     for (SqsMessageHandler.MessageHolder message : readMessagesL) {
       processMessage(message);
@@ -130,18 +144,43 @@ public class TransferMessagesFromSqsToS3 {
     }
   }
 
+  /**
+   * Reads a single message into the write buffer adding seperators.
+   * @param message Message to write.
+   */
   private void processMessage(SqsMessageHandler.MessageHolder message) {
     try {
-      if (fileBufferOs.size() > 0 && ! config.getS3RecordSeparator().isEmpty()) {
+      // File initiator
+      if (firstRecordInFile && ! config.getS3FileInitiator().isEmpty()) {
+        fileBufferOs.write(config.getS3FileInitiator().getBytes());
+      }
+
+      // Record separator, for non first records
+      if (fileBufferOs.size() > 0 && ! firstRecordInFile
+          && ! config.getS3RecordSeparator().isEmpty()) {
         fileBufferOs.write(config.getS3RecordSeparator().getBytes());
       }
+      firstRecordInFile = false;
+      // Record initiator
+      if (! config.getS3RecordInitiator().isEmpty()) {
+        fileBufferOs.write(config.getS3RecordInitiator().getBytes());
+      }
+
       fileBufferOs.write(message.getMessage().getBytes());
+      // Record terminator
+      if (! config.getS3RecordTerminator().isEmpty()) {
+        fileBufferOs.write(config.getS3RecordTerminator().getBytes());
+      }
+
       transferredMsgIds.add(message.getMessageId());
 
     } catch (IOException expected) {
     }
   }
 
+  /**
+   * Checks if the message or file-size thresholds have been reached and writes file to S3.
+   */
   private void checkAndFlushFileBuffer() {
     // Write file
     if (transferredMsgIds.size() >= config.getS3MaxMessagesPerFile()
@@ -156,7 +195,8 @@ public class TransferMessagesFromSqsToS3 {
 
   /**
    * Transfers the current message buffer to S3.
-   * @param finalizeFile Finalises the file, closing the MultiPartUpload.
+   * @param finalizeFile Finalises the file, adding the file terminator and closing the
+   *                     MultiPartUpload.
    */
   private void flushFileBufferToS3(boolean finalizeFile) {
     if (transferredMsgIds.size() == 0) {
@@ -171,11 +211,10 @@ public class TransferMessagesFromSqsToS3 {
           + "\"b with \"" + transferredMsgIds.size() + "\" messages." + lineSep);
     }
     if (s3MultiPartFileHandler == null) {
-
       startNewFile();
     }
 
-    uploadPart();
+    uploadPart(false);
 
     if (finalizeFile) {
       finalizeFile();
@@ -190,15 +229,28 @@ public class TransferMessagesFromSqsToS3 {
       context.getLogger().log("Starting new file \"" + fileName + "\"." + lineSep );
     }
     s3MultiPartFileHandler =
-        S3MultiPartFileHandler.startFileUpload(fileName,config, context.getLogger());
+        S3MultiPartFileHandler.startFileUpload(fileName, config, context.getLogger());
   }
 
-  private void uploadPart() {
+  /**
+   * Uploads a S3 Multi Part upload file part.
+   * @param lastPart Set the file separator if it is the last part.
+   */
+  private void uploadPart(boolean lastPart) {
+    if (! config.getS3FileTerminator().isEmpty()) {
+      try {
+        fileBufferOs.write(config.getS3FileTerminator().getBytes());
+      } catch (IOException expected) {
+      }
+    }
     s3MultiPartFileHandler.uploadPart(fileBufferOs.toByteArray());
     fileSize += fileBufferOs.size();
     fileBufferOs = new ByteArrayOutputStream();
   }
 
+  /**
+   * Closes the S3 multipart upload and deletes the messages.
+   */
   private void finalizeFile() {
     if (config.isDebug()) {
       context.getLogger().log("Finalizing file upload." + lineSep);
@@ -209,5 +261,6 @@ public class TransferMessagesFromSqsToS3 {
     s3MultiPartFileHandler = null;
     sqsMessageHandler.deleteMessages(transferredMsgIds);
     transferredMsgIds = new ArrayList<>();
+    firstRecordInFile = true;
   }
 }

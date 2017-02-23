@@ -31,8 +31,12 @@ public class Config {
   private int sqsDeletionThreads;
   private String s3BucketName;
   private String s3BucketFolder;
+  private String s3FileInitiator;
   private String s3FilePattern;
+  private String s3FileTerminator;
+  private String s3RecordInitiator;
   private String s3RecordSeparator;
+  private String s3RecordTerminator;
   private int s3MaxFileSizeKb;
   private int s3UploadPartSizeKb;
   private boolean s3UploadThreadsEnabled;
@@ -102,12 +106,44 @@ public class Config {
     this.s3BucketFolder = s3BucketFolder;
   }
 
+  public String getS3FileInitiator() {
+    return s3FileInitiator;
+  }
+
+  public void setS3FileInitiator(String s3FileInitiator) {
+    this.s3FileInitiator = s3FileInitiator;
+  }
+
   public String getS3FilePattern() {
     return s3FilePattern;
   }
 
   public void setS3FilePattern(String s3FilePattern) {
     this.s3FilePattern = s3FilePattern;
+  }
+
+  public String getS3FileTerminator() {
+    return s3FileTerminator;
+  }
+
+  public void setS3FileTerminator(String s3FileTerminator) {
+    this.s3FileTerminator = s3FileTerminator;
+  }
+
+  public int getS3MaxFileSizeKb() {
+    return s3MaxFileSizeKb;
+  }
+
+  public void setS3MaxFileSizeKb(int s3MaxFileSizeKb) {
+    this.s3MaxFileSizeKb = s3MaxFileSizeKb;
+  }
+
+  public String getS3RecordInitiator() {
+    return s3RecordInitiator;
+  }
+
+  public void setS3RecordInitiator(String s3RecordInitiator) {
+    this.s3RecordInitiator = s3RecordInitiator;
   }
 
   public String getS3RecordSeparator() {
@@ -118,12 +154,12 @@ public class Config {
     this.s3RecordSeparator = s3RecordSeparator;
   }
 
-  public int getS3MaxFileSizeKb() {
-    return s3MaxFileSizeKb;
+  public String getS3RecordTerminator() {
+    return s3RecordTerminator;
   }
 
-  public void setS3MaxFileSizeKb(int s3MaxFileSizeKb) {
-    this.s3MaxFileSizeKb = s3MaxFileSizeKb;
+  public void setS3RecordTerminator(String s3RecordTerminator) {
+    this.s3RecordTerminator = s3RecordTerminator;
   }
 
   public int getS3UploadPartSizeKb() {
